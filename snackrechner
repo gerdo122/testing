@@ -1,0 +1,50 @@
+import streamlit as st
+
+def berechne_amortisation(verkaufspreis_faktor, stromverbrauch, verkaeufe, mietkosten, steuern, anschaffungskosten=13000):
+    strompreis_kwh = 0.30  # Durchschnittlicher Strompreis pro kWh in Deutschland
+    einkaufspreis = 1.00  # Durchschnittlicher Einkaufspreis pro Snack
+    
+    # Berechnungen
+    verkaufspreis = einkaufspreis * verkaufspreis_faktor
+    umsatz_pro_tag = verkaeufe * verkaufspreis
+    gewinn_pro_tag = umsatz_pro_tag - (verkaeufe * einkaufspreis) - (stromverbrauch * strompreis_kwh)
+    
+    if steuern:
+        steuern_pro_tag = gewinn_pro_tag * 0.19  # 19% MwSt
+        gewinn_pro_tag -= steuern_pro_tag
+    
+    gewinn_pro_tag -= mietkosten / 30  # Monatliche Miete auf tägliche Kosten umlegen
+    
+    if gewinn_pro_tag <= 0:
+        return "Dein Automat macht aktuell keinen Gewinn. Überdenke die Preise oder Standort."
+    
+    amortisationstage = anschaffungskosten / gewinn_pro_tag
+    return f"Der Automat amortisiert sich in ca. {int(amortisationstage)} Tagen (~{int(amortisationstage/30)} Monaten). Danach machst du Gewinn!"
+
+st.title("📊 Snackautomaten-Rechner")
+
+# Standortauswahl
+standort = st.selectbox("Wo steht dein Automat?", ["Stark besucht", "Normal besucht", "Wenig besucht"])
+
+# Verkaufspreis-Faktor
+preis_faktor = st.selectbox("Wie hoch sind deine Verkaufspreise?", [2.0, 1.5, 3.0])
+
+# Stromverbrauch
+stromverbrauch = st.number_input("Wie viel kW verbraucht dein Automat pro Tag?", min_value=0.5, max_value=10.0, value=2.5)
+
+# Verkäufe pro Tag (automatische Schätzung oder Eingabe)
+if st.checkbox("Ich will die Verkäufe selbst eingeben"):
+    verkaeufe = st.number_input("Wie viele Verkäufe pro Tag?", min_value=1, max_value=500, value=30)
+else:
+    verkaeufe = 50 if standort == "Stark besucht" else 30 if standort == "Normal besucht" else 15
+
+# Mietkosten
+miete = st.number_input("Miete pro Monat (0 falls keine)", min_value=0, max_value=5000, value=0)
+
+# Steuern
+steuern = st.checkbox("Steuern berechnen? (19% MwSt)")
+
+# Berechnung & Ergebnis
+if st.button("Berechnen!"):
+    ergebnis = berechne_amortisation(preis_faktor, stromverbrauch, verkaeufe, miete, steuern)
+    st.success(ergebnis)
